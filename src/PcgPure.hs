@@ -114,3 +114,16 @@ xorshift n steps = n `xor` (n `unsafeShiftR` steps)
 
 top_bits :: (Integral a, FiniteBits a, Num b) => a -> Int -> b
 top_bits n bits = fromIntegral $ n `unsafeShiftR` (finiteBitSize n - bits)
+
+rand_range :: (Word32, Word32) -> UM.IOVector Word64 -> IO Word32
+rand_range (i, j) gen = go
+    where
+    go = do
+        r <- pcg32_int32_io rxs_m_xs gen
+        if r >= clamp then go else return $ r `quot` buckets + lower
+
+    (lower, upper) = if i < j then (i, j) else (j, i)
+    range = upper - lower + 1
+    -- bos' technique
+    buckets = maxBound `quot` range
+    clamp = buckets * range
