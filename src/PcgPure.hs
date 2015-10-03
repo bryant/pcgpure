@@ -38,8 +38,13 @@ pcg32_self_init_vec :: IO (UM.IOVector Word64)
 pcg32_self_init_vec = do
     initial <- randomIO
     increment <- (.|. 0x01) <$> randomIO
+    let initial' = pcg32_advance_vec (initial + increment) increment
+    pcg32_init initial' increment
+
+pcg32_init :: Word64 -> Word64 -> IO (UM.IOVector Word64)
+pcg32_init state increment = do
     v <- UM.unsafeNew 2
-    UM.unsafeWrite v 0 initial
+    UM.unsafeWrite v 0 state
     UM.unsafeWrite v 1 increment
     return v
 
