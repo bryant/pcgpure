@@ -78,10 +78,10 @@ pcg32_int32_io st = do
     state <- UM.unsafeRead st 0
     inc <- UM.unsafeRead st 1
     UM.unsafeWrite st 0 $ pcg32_advance_vec state inc
-    return $ permute state
+    return $ xsh_rr state
 
-permute :: (Integral u, Integral v, FiniteBits u, Bits v) => u -> v
-permute n = fromIntegral $
+xsh_rr :: (Integral u, Integral v, FiniteBits u, Bits v) => u -> v
+xsh_rr n = fromIntegral $
     xorshift n shift `rotateR` fromIntegral (top_bits n 5)
     where shift = (64 - 32 + 5) `quot` 2
 {-
