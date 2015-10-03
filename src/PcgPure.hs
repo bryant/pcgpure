@@ -91,8 +91,10 @@ rxs_m_xs n =
     mcg = 12605985483714917081 :: Word64
 
 xsh_rr :: Word64 -> Word32
-xsh_rr n = fromIntegral $
-    xorshift n shift `rotateR` fromIntegral (top_bits n 5)
+xsh_rr n =
+    let xsh = xorshift n shift
+        xsh_32 = fromIntegral $ xsh `unsafeShiftR` (64 - 32 - 5) :: Word32
+    in xsh_32 `rotateR` fromIntegral (top_bits xsh 5)
     where shift = (64 - 32 + 5) `quot` 2
 {-
     where
