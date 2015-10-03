@@ -82,13 +82,17 @@ pcg32_int32_io adv st = do
 
 rxs_m_xs :: Word64 -> Word32
 rxs_m_xs n =
-    let op = fromIntegral $ n `unsafeShiftR` (64 - 4)
+    let op = fromIntegral $ top_bits n 4
         rxs = n `xor` (n `unsafeShiftR` (4 + op))
-        rxs_m = fromIntegral $ (rxs * mcg) `unsafeShiftR` 32 :: Word32
-    in rxs_m `xor` (rxs_m `unsafeShiftR` funny)
+        rxs_m = rxs * mcg
+        rxs_m_32 = lower_32 rxs_m
+    in rxs_m_32 `xor` (rxs_m_32 `unsafeShiftR` funny)
     where
-    funny = (2 * 64 + 2) `quot` 3
+    funny = (2 * 32 + 2) `quot` 3
     mcg = 12605985483714917081 :: Word64
+
+lower_32 :: Word64 -> Word32
+lower_32 n = fromIntegral $ n `unsafeShiftR` 32
 
 xsh_rr :: Word64 -> Word32
 xsh_rr n =
