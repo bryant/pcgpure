@@ -29,8 +29,8 @@ pcg32_int32_io :: (Word64 -> Word32) -> PcgState -> IO Word32
 pcg32_int32_io adv st = do
     state <- UM.unsafeRead st 0
     inc <- UM.unsafeRead st 1
-    UM.unsafeWrite st 0 $ pcg32_advance_vec state inc
-    return $ adv state
+    UM.unsafeWrite st 0 $! pcg32_advance_vec state inc
+    return $! adv state
 
 rxs_m_xs :: Word64 -> Word32
 rxs_m_xs n =
@@ -39,6 +39,7 @@ rxs_m_xs n =
     where
     funny = (2 * 32 + 2) `quot` 3
     mcg = 12605985483714917081 :: Word64
+{-# INLINE rxs_m_xs #-}
 
 u32_from_bit :: Int -> Word64 -> Word32
 u32_from_bit nbitsof p = fromIntegral $ p `unsafeShiftR` nbitsof
@@ -49,6 +50,7 @@ xsh_rr n =
         xsh_32 = u32_from_bit (64 - 32 - 5) xsh
     in xsh_32 `rotateR` top_bits xsh 5
     where shift = (64 - 32 + 5) `quot` 2
+{-# INLINE xsh_rr #-}
 
 xorshift :: FiniteBits a => a -> Int -> a
 xorshift n steps = n `xor` (n `unsafeShiftR` steps)
