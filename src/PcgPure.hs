@@ -6,7 +6,7 @@ module PcgPure where
 import qualified Data.Vector.Unboxed.Mutable as UM
 import Data.IORef (IORef, readIORef, modifyIORef')
 import Data.Word (Word32, Word64)
-import Data.Bits (finiteBitSize, FiniteBits, xor, shiftR, rotateR, Bits)
+import Data.Bits (finiteBitSize, FiniteBits, xor, shiftR, rotateR, (.|.))
 import qualified Data.ByteString as B
 import Control.Monad.State (get, put, State, runState)
 import System.Random
@@ -37,7 +37,7 @@ pcg32_self_init = do
 pcg32_self_init_vec :: IO (UM.IOVector Word64)
 pcg32_self_init_vec = do
     initial <- randomIO
-    increment <- randomIO
+    increment <- (.|. 0x01) <$> randomIO
     v <- UM.unsafeNew 2
     UM.unsafeWrite v 0 initial
     UM.unsafeWrite v 1 increment
