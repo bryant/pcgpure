@@ -87,23 +87,20 @@ pcg32_int32_io adv st = do
 
 rxs_m_xs :: Word64 -> Word32
 rxs_m_xs n =
-    let op = fromIntegral $ top_bits n 4
-        rxs = n `xor` (n `unsafeShiftR` (4 + op))
-        rxs_m = rxs * mcg
-        rxs_m_32 = lower_32 rxs_m
-    in rxs_m_32 `xor` (rxs_m_32 `unsafeShiftR` funny)
+    let rxs_m_32 = u32_from_bit 32 $ mcg * xorshift n (4 + top_bits n 4)
+    in xorshift rxs_m_32 funny
     where
     funny = (2 * 32 + 2) `quot` 3
     mcg = 12605985483714917081 :: Word64
 
-lower_32 :: Word64 -> Word32
-lower_32 n = fromIntegral $ n `unsafeShiftR` 32
+u32_from_bit :: Int -> Word64 -> Word32
+u32_from_bit nbitsof p = fromIntegral $ p `unsafeShiftR` nbitsof
 
 xsh_rr :: Word64 -> Word32
 xsh_rr n =
     let xsh = xorshift n shift
-        xsh_32 = fromIntegral $ xsh `unsafeShiftR` (64 - 32 - 5) :: Word32
-    in xsh_32 `rotateR` fromIntegral (top_bits xsh 5)
+        xsh_32 = u32_from_bit (64 - 32 - 5) xsh
+    in xsh_32 `rotateR` top_bits xsh 5
     where shift = (64 - 32 + 5) `quot` 2
 {-
     where
@@ -115,5 +112,5 @@ xsh_rr n =
 xorshift :: FiniteBits a => a -> Int -> a
 xorshift n steps = n `xor` (n `unsafeShiftR` steps)
 
-top_bits :: FiniteBits a => a -> Int -> a
-top_bits n bits = n `unsafeShiftR` (finiteBitSize n - bits)
+top_bits :: (Integral a, FiniteBits a, Num b) => a -> Int -> b
+top_bits n bits = fromIntegral $ n `unsafeShiftR` (finiteBitSize n - bits)
