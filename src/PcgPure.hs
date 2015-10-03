@@ -6,7 +6,7 @@ module PcgPure where
 import qualified Data.Vector.Unboxed.Mutable as UM
 import Data.IORef (IORef, readIORef, modifyIORef')
 import Data.Word (Word32, Word64)
-import Data.Bits (finiteBitSize, FiniteBits, xor, shiftR, rotateR, (.|.))
+import Data.Bits (finiteBitSize, FiniteBits, xor, unsafeShiftR, rotateR, (.|.))
 import qualified Data.ByteString as B
 import Control.Monad.State (get, put, State, runState)
 import System.Random
@@ -92,7 +92,7 @@ xsh_rr n = fromIntegral $
 -}
 
 xorshift :: FiniteBits a => a -> Int -> a
-xorshift n steps = n `xor` (n `shiftR` steps)
+xorshift n steps = n `xor` (n `unsafeShiftR` steps)
 
 top_bits :: FiniteBits a => a -> Int -> a
-top_bits n bits = n `shiftR` (finiteBitSize n - bits)
+top_bits n bits = n `unsafeShiftR` (finiteBitSize n - bits)
