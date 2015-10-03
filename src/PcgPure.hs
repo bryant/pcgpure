@@ -78,7 +78,17 @@ pcg32_int32_io st = do
     state <- UM.unsafeRead st 0
     inc <- UM.unsafeRead st 1
     UM.unsafeWrite st 0 $ pcg32_advance_vec state inc
-    return $ xsh_rr state
+    return $ rxs_m_xs state
+
+rxs_m_xs :: Word64 -> Word32
+rxs_m_xs n =
+    let op = fromIntegral $ n `unsafeShiftR` (64 - 4)
+        rxs = n `xor` (n `unsafeShiftR` (4 + op))
+        rxs_m = fromIntegral $ (rxs * mcg) `unsafeShiftR` 32 :: Word32
+    in rxs_m `xor` (rxs_m `unsafeShiftR` funny)
+    where
+    funny = (2 * 64 + 2) `quot` 3
+    mcg = 12605985483714917081 :: Word64
 
 xsh_rr :: Word64 -> Word32
 xsh_rr n = fromIntegral $
