@@ -15,12 +15,12 @@ main = do
     pcggen <- pcg32_self_init_vec
     bench_main mwcgen pcggen
 
-pcgvec len ref = Unboxed.replicateM len (pcg32_int32_io ref)
-
 bench_main mwc pcg = defaultMain
     [ bgroup (show veclen) [
-        bench "pcgpure" . nfIO $ do
-            pcgvec veclen pcg
+        bench "pcgpure.rxs_m_xs" . nfIO $ do
+            Unboxed.replicateM veclen $ pcg32_int32_io rxs_m_xs pcg
+        , bench "pcgpure.xsh_rr" . nfIO $ do
+            Unboxed.replicateM veclen $ pcg32_int32_io xsh_rr pcg
         , bench "mwc-random" . nfIO $ do
             MWC.uniformVector mwc veclen :: IO (Unboxed.Vector Word32)
         ]

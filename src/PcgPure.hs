@@ -73,12 +73,12 @@ pcg32_int32 = do
     --put st'
     return $ fromIntegral {- permute -}state
 
-pcg32_int32_io :: UM.IOVector Word64 -> IO Word32
-pcg32_int32_io st = do
+pcg32_int32_io :: (Word64 -> Word32) -> UM.IOVector Word64 -> IO Word32
+pcg32_int32_io adv st = do
     state <- UM.unsafeRead st 0
     inc <- UM.unsafeRead st 1
     UM.unsafeWrite st 0 $ pcg32_advance_vec state inc
-    return $ rxs_m_xs state
+    return $ adv state
 
 rxs_m_xs :: Word64 -> Word32
 rxs_m_xs n =
