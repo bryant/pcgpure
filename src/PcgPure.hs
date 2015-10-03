@@ -1,5 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
-
 module PcgPure where
 
 import qualified Data.Vector.Unboxed.Mutable as UM
@@ -7,14 +5,16 @@ import Data.Word (Word32, Word64)
 import Data.Bits (finiteBitSize, FiniteBits, xor, unsafeShiftR, rotateR, (.|.))
 import System.Random (randomIO)
 
-pcg32_self_init_vec :: IO (UM.IOVector Word64)
+type PcgState = UM.IOVector Word64
+
+pcg32_self_init_vec :: IO PcgState
 pcg32_self_init_vec = do
     initial <- randomIO
     increment <- (.|. 0x01) <$> randomIO
     let initial' = pcg32_advance_vec (initial + increment) increment
     pcg32_init initial' increment
 
-pcg32_init :: Word64 -> Word64 -> IO (UM.IOVector Word64)
+pcg32_init :: Word64 -> Word64 -> IO PcgState
 pcg32_init state increment = do
     v <- UM.unsafeNew 2
     UM.unsafeWrite v 0 state
@@ -25,7 +25,7 @@ pcg32_advance_vec :: Word64 -> Word64 -> Word64
 pcg32_advance_vec st inc = multiplier * st + inc
     where multiplier = 6364136223846793005
 
-pcg32_int32_io :: (Word64 -> Word32) -> UM.IOVector Word64 -> IO Word32
+pcg32_int32_io :: (Word64 -> Word32) -> PcgState -> IO Word32
 pcg32_int32_io adv st = do
     state <- UM.unsafeRead st 0
     inc <- UM.unsafeRead st 1
@@ -56,7 +56,7 @@ xorshift n steps = n `xor` (n `unsafeShiftR` steps)
 top_bits :: (Integral a, FiniteBits a, Num b) => a -> Int -> b
 top_bits n bits = fromIntegral $ n `unsafeShiftR` (finiteBitSize n - bits)
 
-rand_range :: (Word32, Word32) -> UM.IOVector Word64 -> IO Word32
+rand_range :: (Word32, Word32) -> PcgState -> IO Word32
 rand_range (i, j) gen = go
     where
     go = do
