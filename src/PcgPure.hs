@@ -80,7 +80,7 @@ pcg32_int32_io st = do
     UM.unsafeWrite st 0 $ pcg32_advance_vec state inc
     return $ xsh_rr state
 
-xsh_rr :: (Integral u, Integral v, FiniteBits u, Bits v) => u -> v
+xsh_rr :: Word64 -> Word32
 xsh_rr n = fromIntegral $
     xorshift n shift `rotateR` fromIntegral (top_bits n 5)
     where shift = (64 - 32 + 5) `quot` 2
