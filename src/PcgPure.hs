@@ -2,7 +2,8 @@ module PcgPure where
 
 import qualified Data.Vector.Unboxed.Mutable as UM
 import Data.Word (Word32, Word64)
-import Data.Bits (finiteBitSize, FiniteBits, xor, unsafeShiftR, rotateR, (.|.))
+import Data.Bits (finiteBitSize, FiniteBits, xor, unsafeShiftR,
+                  unsafeShiftL, (.|.))
 import System.Random (randomIO)
 
 type PcgState = UM.IOVector Word64
@@ -48,9 +49,17 @@ xsh_rr :: Word64 -> Word32
 xsh_rr n =
     let xsh = xorshift n shift
         xsh_32 = u32_from_bit (64 - 32 - 5) xsh
-    in xsh_32 `rotateR` top_bits xsh 5
+    in xsh_32 `unsafe_rotr` top_bits xsh 5
     where shift = (64 - 32 + 5) `quot` 2
 {-# INLINE xsh_rr #-}
+
+-- | note the onus on caller to ensure that 0 < pos < bit_width a in
+-- @unsafe_rotr a pos@
+unsafe_rotr :: FiniteBits a => a -> Int -> a
+unsafe_rotr a pos = shift_left .|. shift_right
+    where
+    shift_right = a `unsafeShiftR` pos
+    shift_left = a `unsafeShiftL` (finiteBitSize a - pos)
 
 xorshift :: FiniteBits a => a -> Int -> a
 xorshift n steps = n `xor` (n `unsafeShiftR` steps)
