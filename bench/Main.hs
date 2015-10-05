@@ -28,4 +28,4 @@ bench_main mwc pcg ffipcg = defaultMain
         , bench "pcg-random" . nfIO $ do
             Unboxed.replicateM veclen $ PCG.uniform ffipcg :: IO (Unboxed.Vector Word32)
         ]
-    | veclen <- map (10 ^) [3..4]]
+    | veclen <- map (10 ^) [3..7]]
