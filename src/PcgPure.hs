@@ -35,6 +35,10 @@ pcg32_int32 permute (P st) = do
     return $! permute state
 {-# SPECIALIZE pcg32_int32 :: (Word64 -> Word32) -> PcgState IO -> IO Word32 #-}
 
+gen32 :: PrimMonad m => PcgState m -> m Word32
+gen32 pcg = pcg32_int32 rxs_m_xs
+{-# SPECIALIZE gen32 :: PcgState IO -> IO Word32 #-}
+
 rxs_m_xs :: Word64 -> Word32
 rxs_m_xs n =
     let rxs_m_32 = u32_from_bit 32 $ mcg * xorshift n (4 + top_bits n 4)
@@ -73,7 +77,7 @@ rand_range :: PrimMonad m => (Word32, Word32) -> PcgState m -> m Word32
 rand_range (i, j) st = go
     where
     go = do
-        r <- pcg32_int32 rxs_m_xs st
+        r <- gen32 st
         if r >= clamp then go else return $ r `quot` buckets + lower
 
     (lower, upper) = if i < j then (i, j) else (j, i)
