@@ -28,11 +28,11 @@ pcg32_advance_vec st inc = multiplier * st + inc
     where multiplier = 6364136223846793005
 
 pcg32_int32 :: PrimMonad m => (Word64 -> Word32) -> PcgState m -> m Word32
-pcg32_int32 adv (P st) = do
+pcg32_int32 permute (P st) = do
     state <- UM.unsafeRead st 0
     inc <- UM.unsafeRead st 1
     UM.unsafeWrite st 0 $! pcg32_advance_vec state inc
-    return $! adv state
+    return $! permute state
 {-# SPECIALIZE pcg32_int32 :: (Word64 -> Word32) -> PcgState IO -> IO Word32 #-}
 
 rxs_m_xs :: Word64 -> Word32
