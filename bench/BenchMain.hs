@@ -20,9 +20,10 @@ main = do
 bench_main mwc pcg ffipcg = defaultMain
     [ bgroup (show veclen) [
         bench "pcgpure.rxs_m_xs" . nfIO $ do
-            Unboxed.replicateM veclen $ pcg32_int32_io rxs_m_xs pcg
+            Unboxed.replicateM veclen $
+                pcg32_int32 rxs_m_xs pcg :: IO (Unboxed.Vector Word32)
         , bench "pcgpure.xsh_rr" . nfIO $ do
-            Unboxed.replicateM veclen $ pcg32_int32_io xsh_rr pcg
+            Unboxed.replicateM veclen $ pcg32_int32 xsh_rr pcg
         , bench "mwc-random" . nfIO $ do
             MWC.uniformVector mwc veclen :: IO (Unboxed.Vector Word32)
         , bench "pcg-random" . nfIO $ do
