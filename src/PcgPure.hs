@@ -33,6 +33,7 @@ pcg32_int32 adv (P st) = do
     inc <- UM.unsafeRead st 1
     UM.unsafeWrite st 0 $! pcg32_advance_vec state inc
     return $! adv state
+{-# SPECIALIZE pcg32_int32 :: (Word64 -> Word32) -> PcgState IO -> IO Word32 #-}
 
 rxs_m_xs :: Word64 -> Word32
 rxs_m_xs n =
@@ -80,3 +81,4 @@ rand_range (i, j) st = go
     -- bos' technique
     buckets = maxBound `quot` range
     clamp = buckets * range
+{-# SPECIALIZE rand_range :: (Word32, Word32) -> PcgState IO -> IO Word32 #-}
