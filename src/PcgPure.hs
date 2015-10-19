@@ -36,7 +36,7 @@ pcg32_int32 permute (P st) = do
 {-# SPECIALIZE pcg32_int32 :: (Word64 -> Word32) -> PcgState IO -> IO Word32 #-}
 
 gen32 :: PrimMonad m => PcgState m -> m Word32
-gen32 pcg = pcg32_int32 rxs_m_xs
+gen32 pcg = pcg32_int32 rxs_m_xs pcg
 {-# SPECIALIZE gen32 :: PcgState IO -> IO Word32 #-}
 
 rxs_m_xs :: Word64 -> Word32
