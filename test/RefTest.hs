@@ -65,8 +65,13 @@ mk_pcg permute state = do
 
 main :: IO ()
 main = do
+    putStrLn $ unlines ["rxs_m_xs" ,"========"]
     runner <- test_variant 256 rxs_m_xs 23
     loop runner verbosity
+
+    putStrLn "\n"
+
+    putStrLn $ unlines ["xsh_rr" ,"========"]
     runner <- test_variant 256 xsh_rr 23
     loop runner verbosity
     where
