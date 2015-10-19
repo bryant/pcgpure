@@ -10,7 +10,7 @@ run: RefTest
 	./RefTest
 
 RefTest: RefTest.hs wrapper.o
-	$(GHC) -main-is RefTest -i$(patsubst %,:%, $(GHCINCLUDES)) $^ -o $@ \
+	$(GHC) -O3 -main-is RefTest -i$(patsubst %,:%, $(GHCINCLUDES)) $^ -o $@ \
 		-optl-lstdc++  # link cxx runtime
 
 %.o: %.cpp
