@@ -3,8 +3,9 @@ module PcgPure where
 import qualified Data.Vector.Unboxed.Mutable as UM
 import qualified Data.Vector.Generic as Vec
 import Data.Word (Word8, Word16, Word32, Word64)
+import Data.Int (Int8, Int16, Int32, Int64)
 import Data.Bits (finiteBitSize, FiniteBits, xor, unsafeShiftR,
-                  unsafeShiftL, (.|.))
+                  unsafeShiftL, (.|.), (.&.))
 import System.Random (randomIO)
 import Control.Monad.Primitive (PrimMonad, PrimState)
 
@@ -110,6 +111,41 @@ instance Variate Word64 where
         l <- fromIntegral <$> gen32 pcg
         return $! (u `unsafeShiftL` 32) .|. l
     {-# INLINE uniform #-}
+
+instance Variate Int8 where
+    uniform pcg = fromIntegral <$> gen32 pcg
+    {-# INLINE uniform #-}
+
+instance Variate Int16 where
+    uniform pcg = fromIntegral <$> gen32 pcg
+    {-# INLINE uniform #-}
+
+instance Variate Int32 where
+    uniform pcg = fromIntegral <$> gen32 pcg
+    {-# INLINE uniform #-}
+
+instance Variate Int64 where
+    uniform pcg = from_word64 <$> uniform pcg
+    {-# INLINE uniform #-}
+
+instance Variate Float where
+    -- | canonical [0, 1)
+    uniform pcg = (/ max_) . fromIntegral <$> gen32 pcg
+        where max_ = fromIntegral (maxBound :: Word32)
+    {-# INLINE uniform #-}
+
+instance Variate Double where
+    -- | canonical [0, 1)
+    uniform pcg = (/ max_) . from_word64 <$> uniform pcg
+        where max_ = fromIntegral (maxBound :: Word64)
+    {-# INLINE uniform #-}
+
+instance Variate Bool where
+    uniform pcg = toEnum . fromIntegral . (.&. 0x01) <$> gen32 pcg
+    {-# INLINE uniform #-}
+
+from_word64 :: Num a => Word64 -> a
+from_word64 = fromIntegral
 
 uniformVector :: (PrimMonad m, Vec.Vector v a, Variate a) =>
                  PcgState m -> Int -> m (v a)
