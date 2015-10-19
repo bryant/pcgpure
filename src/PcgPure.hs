@@ -1,7 +1,8 @@
 module PcgPure where
 
 import qualified Data.Vector.Unboxed.Mutable as UM
-import Data.Word (Word32, Word64)
+import qualified Data.Vector.Generic as Vec
+import Data.Word (Word8, Word16, Word32, Word64)
 import Data.Bits (finiteBitSize, FiniteBits, xor, unsafeShiftR,
                   unsafeShiftL, (.|.))
 import System.Random (randomIO)
@@ -73,16 +74,43 @@ xorshift n steps = n `xor` (n `unsafeShiftR` steps)
 top_bits :: (Integral a, FiniteBits a, Num b) => a -> Int -> b
 top_bits n bits = fromIntegral $ n `unsafeShiftR` (finiteBitSize n - bits)
 
-rand_range :: PrimMonad m => (Word32, Word32) -> PcgState m -> m Word32
-rand_range (i, j) st = go
-    where
-    go = do
-        r <- gen32 st
-        if r >= clamp then go else return $ r `quot` buckets + lower
+-- adhere to mwc-random's api
+uniformR :: (PrimMonad m, Variate a, Integral a, Bounded a) =>
+            (a, a) -> PcgState m -> m a
+uniformR (i, j) st = case upper - lower + 1 of
+    0 -> uniform st
+    range ->
+        let clamp = maxBound - (maxBound `rem` range)
+            go = do
+                r <- uniform st
+                if r >= clamp then go else return $ r `rem` range + lower
+        in go
+    where (lower, upper) = if i < j then (i, j) else (j, i)
+{-# INLINE uniformR #-}
 
-    (lower, upper) = if i < j then (i, j) else (j, i)
-    range = upper - lower + 1
-    -- bos' technique
-    buckets = maxBound `quot` range
-    clamp = buckets * range
-{-# SPECIALIZE rand_range :: (Word32, Word32) -> PcgState IO -> IO Word32 #-}
+-- adhere to mwc-random's api
+class Variate a where
+    uniform :: PrimMonad m => PcgState m -> m a
+
+instance Variate Word8 where
+    uniform pcg = fromIntegral <$> gen32 pcg
+    {-# INLINE uniform #-}
+
+instance Variate Word16 where
+    uniform pcg = fromIntegral <$> gen32 pcg
+    {-# INLINE uniform #-}
+
+instance Variate Word32 where
+    uniform = gen32
+    {-# INLINE uniform #-}
+
+instance Variate Word64 where
+    uniform pcg = do
+        u <- fromIntegral <$> gen32 pcg
+        l <- fromIntegral <$> gen32 pcg
+        return $! (u `unsafeShiftL` 32) .|. l
+    {-# INLINE uniform #-}
+
+uniformVector :: (PrimMonad m, Vec.Vector v a, Variate a) =>
+                 PcgState m -> Int -> m (v a)
+uniformVector pcg veclen = Vec.replicateM veclen $ uniform pcg
