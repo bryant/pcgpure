@@ -76,9 +76,9 @@ top_bits :: (Integral a, FiniteBits a, Num b) => a -> Int -> b
 top_bits n bits = fromIntegral $ n `unsafeShiftR` (finiteBitSize n - bits)
 
 -- adhere to mwc-random's api
-uniformR :: (PrimMonad m, Variate a, Integral a, Bounded a) =>
-            (a, a) -> PcgState m -> m a
-uniformR (i, j) st = case upper - lower + 1 of
+rand_bounded :: (PrimMonad m, Variate a, Integral a, Bounded a) =>
+                (a, a) -> PcgState m -> m a
+rand_bounded (i, j) st = case upper - lower + 1 of
     0 -> uniform st
     range ->
         let clamp = maxBound - (maxBound `rem` range)
@@ -87,23 +87,33 @@ uniformR (i, j) st = case upper - lower + 1 of
                 if r >= clamp then go else return $ r `rem` range + lower
         in go
     where (lower, upper) = if i < j then (i, j) else (j, i)
-{-# INLINE uniformR #-}
+{-# INLINE rand_bounded #-}
 
 -- adhere to mwc-random's api
 class Variate a where
     uniform :: PrimMonad m => PcgState m -> m a
+    uniformR :: PrimMonad m => (a, a) -> PcgState m -> m a
 
 instance Variate Word8 where
     uniform pcg = fromIntegral <$> gen32 pcg
     {-# INLINE uniform #-}
 
+    uniformR = rand_bounded
+    {-# INLINE uniformR #-}
+
 instance Variate Word16 where
     uniform pcg = fromIntegral <$> gen32 pcg
     {-# INLINE uniform #-}
 
+    uniformR = rand_bounded
+    {-# INLINE uniformR #-}
+
 instance Variate Word32 where
     uniform = gen32
     {-# INLINE uniform #-}
+
+    uniformR = rand_bounded
+    {-# INLINE uniformR #-}
 
 instance Variate Word64 where
     uniform pcg = do
@@ -112,21 +122,36 @@ instance Variate Word64 where
         return $! (u `unsafeShiftL` 32) .|. l
     {-# INLINE uniform #-}
 
+    uniformR = rand_bounded
+    {-# INLINE uniformR #-}
+
 instance Variate Int8 where
     uniform pcg = fromIntegral <$> gen32 pcg
     {-# INLINE uniform #-}
+
+    uniformR = rand_bounded
+    {-# INLINE uniformR #-}
 
 instance Variate Int16 where
     uniform pcg = fromIntegral <$> gen32 pcg
     {-# INLINE uniform #-}
 
+    uniformR = rand_bounded
+    {-# INLINE uniformR #-}
+
 instance Variate Int32 where
     uniform pcg = fromIntegral <$> gen32 pcg
     {-# INLINE uniform #-}
 
+    uniformR = rand_bounded
+    {-# INLINE uniformR #-}
+
 instance Variate Int64 where
     uniform pcg = from_word64 <$> uniform pcg
     {-# INLINE uniform #-}
+
+    uniformR = rand_bounded
+    {-# INLINE uniformR #-}
 
 instance Variate Float where
     -- | canonical [0, 1)
@@ -134,15 +159,32 @@ instance Variate Float where
         where max_ = fromIntegral (maxBound :: Word32)
     {-# INLINE uniform #-}
 
+    -- | [a, b). does not check that a <= b.
+    uniformR (a, b) pcg = (\n -> n * (b - a) + a) <$> uniform pcg
+    {-# INLINE uniformR #-}
+
 instance Variate Double where
     -- | canonical [0, 1)
     uniform pcg = (/ max_) . from_word64 <$> uniform pcg
         where max_ = fromIntegral (maxBound :: Word64)
     {-# INLINE uniform #-}
 
+    -- | [a, b). does not check that a <= b.
+    uniformR (a, b) pcg = (\n -> n * (b - a) + a) <$> uniform pcg
+    {-# INLINE uniformR #-}
+
 instance Variate Bool where
     uniform pcg = toEnum . fromIntegral . (.&. 0x01) <$> gen32 pcg
     {-# INLINE uniform #-}
+
+    -- | TODO: do calls to this even make sense?
+    uniformR (a, b) pcg = to_bool <$> rand_bounded (from_bool a, from_bool b) pcg
+        where
+        to_bool :: Word32 -> Bool
+        to_bool = toEnum . fromIntegral
+        from_bool :: Bool -> Word32
+        from_bool = fromIntegral . fromEnum
+    {-# INLINE uniformR #-}
 
 from_word64 :: Num a => Word64 -> a
 from_word64 = fromIntegral
