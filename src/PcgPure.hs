@@ -41,12 +41,11 @@ gen32 :: PrimMonad m => PcgState m -> m Word32
 gen32 pcg = pcg32_int32 rxs_m_xs pcg
 {-# SPECIALIZE gen32 :: PcgState IO -> IO Word32 #-}
 
+-- xs . m . rxs
 rxs_m_xs :: Word64 -> Word32
-rxs_m_xs n =
-    let rxs_m_32 = u32_from_bit 32 $ mcg * xorshift n (4 + top_bits n 4)
-    in xorshift rxs_m_32 funny
+rxs_m_xs n = (`xorshift` funny) . (mcg *) . (`xorshift` (4 + top_bits n 4)) $ n
     where
-    funny = (2 * 32 + 2) `quot` 3
+    funny = (2 * 32 + 2) `quot` 3  -- from pcg_random; rxs_m_xs_mixin::output
     mcg = 12605985483714917081 :: Word64
 {-# INLINE rxs_m_xs #-}
 
